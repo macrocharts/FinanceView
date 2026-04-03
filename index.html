@@ -1,0 +1,473 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  #app {
+    padding: 1.5rem 0 3rem;
+    max-width: 920px;
+    font-family: var(--font-sans);
+  }
+
+  .header { margin-bottom: 2rem; }
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--color-text-primary);
+    letter-spacing: -0.01em;
+  }
+  .header p { font-size: 13px; color: var(--color-text-tertiary); margin-top: 5px; }
+
+  .search-row { display: flex; gap: 8px; margin-bottom: 0.5rem; }
+  .search-row input { flex: 1; font-family: 'DM Mono', monospace; font-size: 13px; }
+  .search-row button { white-space: nowrap; padding: 0 18px; font-family: 'DM Mono', monospace; font-size: 13px; }
+
+  .quick-picks { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.75rem; }
+  .qp { font-size: 11px; font-family: 'DM Mono', monospace; padding: 3px 10px; border-radius: 20px;
+    border: 0.5px solid var(--color-border-secondary); cursor: pointer; color: var(--color-text-secondary);
+    background: transparent; transition: all 0.12s; }
+  .qp:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+
+  .company-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+  .company-name-block {}
+  .company-name { font-family: 'DM Serif Display', serif; font-size: 24px; font-weight: 400; color: var(--color-text-primary); }
+  .company-meta { font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .ir-link { font-size: 12px; color: #185fa5; text-decoration: none; font-family: 'DM Mono', monospace; border: 0.5px solid #b5d4f4; padding: 4px 10px; border-radius: 4px; }
+  .ir-link:hover { background: #e6f1fb; }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+  .metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; position: relative; overflow: hidden; }
+  .metric-label { font-size: 10px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); font-family: 'DM Mono', monospace; line-height: 1; }
+  .metric-period { font-size: 10px; color: var(--color-text-tertiary); margin-top: 6px; font-family: 'DM Mono', monospace; }
+  .metric-chg { font-size: 11px; margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .pos { color: #2d8a4e; } .neg { color: #c0392b; }
+
+  .tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.5rem; gap: 0; }
+  .tab { padding: 8px 18px; font-size: 12px; cursor: pointer; color: var(--color-text-tertiary);
+    border-bottom: 2px solid transparent; margin-bottom: -0.5px; font-family: 'DM Mono', monospace;
+    text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.12s; }
+  .tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); }
+  .tab:hover:not(.active) { color: var(--color-text-secondary); }
+
+  .section-title { font-size: 11px; color: var(--color-text-tertiary); text-transform: uppercase;
+    letter-spacing: 0.08em; font-family: 'DM Mono', monospace; margin-bottom: 12px; margin-top: 1.5rem; }
+  .section-title:first-child { margin-top: 0; }
+
+  .table-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 1.75rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'DM Mono', monospace; }
+  th { background: var(--color-background-secondary); color: var(--color-text-tertiary); font-weight: 500;
+    padding: 9px 14px; text-align: left; border-bottom: 0.5px solid var(--color-border-tertiary);
+    white-space: nowrap; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10px; }
+  td { padding: 9px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-background-secondary); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .badge { font-size: 10px; font-weight: 500; padding: 2px 7px; border-radius: 3px; font-family: 'DM Mono', monospace; }
+  .f10k { background: #e6f1fb; color: #0c447c; }
+  .f10q { background: #eaf3de; color: #27500a; }
+
+  .chart-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+  .chart-label-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--color-text-tertiary); font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 10px; height: 160px; }
+  .bar-grp { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 3px; transition: opacity 0.15s; }
+  .bar:hover { opacity: 0.75; }
+  .bar-period { font-size: 9px; color: var(--color-text-tertiary); text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'DM Mono', monospace; }
+  .bar-amt { font-size: 9px; color: var(--color-text-secondary); font-family: 'DM Mono', monospace; }
+
+  .filings-list { display: flex; flex-direction: column; gap: 6px; }
+  .filing-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); }
+  .filing-desc { font-size: 12px; color: var(--color-text-primary); flex: 1; font-family: var(--font-sans); }
+  .filing-date { font-size: 11px; color: var(--color-text-tertiary); white-space: nowrap; font-family: 'DM Mono', monospace; }
+  .filing-src { font-size: 11px; color: var(--color-text-tertiary); white-space: nowrap; font-family: 'DM Mono', monospace; font-style: italic; }
+  .flink { font-size: 11px; color: #185fa5; text-decoration: none; font-family: 'DM Mono', monospace; }
+  .flink:hover { text-decoration: underline; }
+
+  .filter-row { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .filter-btn { font-size: 11px; padding: 4px 12px; border-radius: 20px;
+    border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer;
+    color: var(--color-text-secondary); font-family: 'DM Mono', monospace; }
+  .filter-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); }
+
+  .loading { display: flex; align-items: center; gap: 12px; padding: 3rem 0; color: var(--color-text-secondary); font-size: 13px; font-family: 'DM Mono', monospace; }
+  .spinner { width: 16px; height: 16px; border: 1.5px solid var(--color-border-secondary); border-top-color: var(--color-text-secondary); border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-steps { display: flex; flex-direction: column; gap: 6px; }
+  .loading-step { font-size: 12px; color: var(--color-text-tertiary); font-family: 'DM Mono', monospace; padding-left: 4px; opacity: 0; transition: opacity 0.3s; }
+  .loading-step.visible { opacity: 1; }
+  .loading-step.done { color: #2d8a4e; }
+  .loading-step.done::before { content: '✓ '; }
+  .loading-step.active::before { content: '→ '; color: var(--color-text-secondary); }
+
+  .error-box { font-size: 13px; padding: 1rem; background: #fcebeb; border-radius: var(--border-radius-md);
+    border: 0.5px solid #f09595; color: #a32d2d; font-family: 'DM Mono', monospace; }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; }
+  .empty-state p { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--color-text-secondary); font-weight: 400; }
+  .empty-state small { font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px; display: block; font-family: 'DM Mono', monospace; }
+
+  .source-strip { display: flex; align-items: center; gap: 8px; margin-top: 1.5rem; padding-top: 1rem; border-top: 0.5px solid var(--color-border-tertiary); }
+  .source-dot { width: 6px; height: 6px; border-radius: 50%; background: #2d8a4e; flex-shrink: 0; }
+  .source-text { font-size: 11px; color: var(--color-text-tertiary); font-family: 'DM Mono', monospace; }
+</style>
+
+<div id="app">
+  <div class="header">
+    <h1>IR Filing Explorer</h1>
+    <p>Financial data pulled directly from each company's Investor Relations page and SEC filings</p>
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="Company name or ticker — e.g. Apple, NVDA, JPMorgan..." />
+    <button onclick="runSearch()" id="searchBtn">Search ↗</button>
+  </div>
+  <div class="quick-picks">
+    <span>Quick:</span>
+    <button class="qp" onclick="quickSearch('Apple')">AAPL</button>
+    <button class="qp" onclick="quickSearch('Microsoft')">MSFT</button>
+    <button class="qp" onclick="quickSearch('Amazon')">AMZN</button>
+    <button class="qp" onclick="quickSearch('NVIDIA')">NVDA</button>
+    <button class="qp" onclick="quickSearch('Tesla')">TSLA</button>
+    <button class="qp" onclick="quickSearch('JPMorgan Chase')">JPM</button>
+    <button class="qp" onclick="quickSearch('Alphabet')">GOOGL</button>
+    <button class="qp" onclick="quickSearch('Meta Platforms')">META</button>
+    <button class="qp" onclick="quickSearch('ExxonMobil')">XOM</button>
+  </div>
+
+  <div id="mainContent">
+    <div class="empty-state">
+      <p>Search any U.S. public company</p>
+      <small>Sources: company IR websites · SEC EDGAR filings · press releases</small>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentData = null;
+let activeTab = 'financials';
+let filingFilter = 'all';
+
+const searchInput = document.getElementById('searchInput');
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+
+function quickSearch(name) {
+  searchInput.value = name;
+  runSearch();
+}
+
+function esc(s) {
+  return (s == null ? '' : String(s))
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setLoading() {
+  const steps = [
+    'Locating investor relations page...',
+    'Fetching latest 10-K filing...',
+    'Fetching recent 10-Q filings...',
+    'Extracting financial statements...',
+    'Building dashboard...'
+  ];
+  document.getElementById('mainContent').innerHTML = `
+    <div class="loading" style="align-items:flex-start;padding:2rem 0;">
+      <div class="spinner" style="margin-top:3px;flex-shrink:0"></div>
+      <div class="loading-steps" id="loadingSteps">
+        ${steps.map((s,i) => `<div class="loading-step" id="lstep${i}">${s}</div>`).join('')}
+      </div>
+    </div>`;
+  let i = 0;
+  const el0 = document.getElementById('lstep0');
+  if (el0) { el0.classList.add('visible','active'); }
+  const interval = setInterval(() => {
+    i++;
+    if (i >= steps.length) { clearInterval(interval); return; }
+    const prev = document.getElementById(`lstep${i-1}`);
+    const cur = document.getElementById(`lstep${i}`);
+    if (!prev || !cur) { clearInterval(interval); return; }
+    prev.classList.remove('active'); prev.classList.add('done');
+    cur.classList.add('visible','active');
+  }, 900);
+  return interval;
+}
+
+async function runSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  const btn = document.getElementById('searchBtn');
+  btn.disabled = true;
+  const interval = setLoading();
+
+  const prompt = `You are a financial research assistant. The user wants live financial data for: "${q}"
+
+Your task:
+1. Search for the company's official Investor Relations website (e.g. investor.apple.com, ir.tesla.com, microsoft.com/en-us/investor)
+2. Find their most recent 10-K annual report and recent 10-Q quarterly reports
+3. Extract key financial metrics from those actual filings or the IR press releases
+
+Return ONLY a raw JSON object (no markdown, no backticks, no explanation) with this exact structure:
+
+{
+  "company": "Full Legal Company Name",
+  "ticker": "TICK",
+  "exchange": "NASDAQ",
+  "cik": "0001234567",
+  "industry": "Semiconductors",
+  "irUrl": "https://investor.company.com",
+  "dataAsOf": "Q4 FY2024",
+  "metrics": {
+    "revenue": [
+      {"period": "FY2024", "value": 391035000000, "form": "10-K", "source": "10-K filed 2024-11-01"},
+      {"period": "FY2023", "value": 383285000000, "form": "10-K", "source": "10-K filed 2023-11-03"},
+      {"period": "FY2022", "value": 394328000000, "form": "10-K", "source": "10-K filed 2022-10-28"},
+      {"period": "FY2021", "value": 365817000000, "form": "10-K", "source": "10-K filed 2021-10-29"},
+      {"period": "FY2020", "value": 274515000000, "form": "10-K", "source": "10-K filed 2020-10-30"}
+    ],
+    "netIncome": [ ...same shape, 4-5 years... ],
+    "totalAssets": [ ...same shape, 4-5 years... ],
+    "cash": [ ...same shape, 4-5 years... ],
+    "totalLiabilities": [ ...same shape, 4-5 years... ],
+    "stockholdersEquity": [ ...same shape, 4-5 years... ],
+    "operatingCashFlow": [ ...same shape, 4-5 years... ],
+    "eps": [ ...same shape, 4-5 years, value is dollars per share like 6.43... ],
+    "grossProfit": [ ...same shape, 4-5 years... ],
+    "operatingIncome": [ ...same shape, 4-5 years... ]
+  },
+  "recentFilings": [
+    {"form": "10-K", "date": "2024-11-01", "period": "FY2024", "description": "Annual Report — Fiscal Year 2024", "edgarUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-K"},
+    {"form": "10-Q", "date": "2025-02-05", "period": "Q1 FY2025", "description": "Quarterly Report — Q1 FY2025", "edgarUrl": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193&type=10-Q"},
+    ...6-8 filings total
+  ],
+  "latestQuarter": {
+    "period": "Q1 FY2025",
+    "revenue": 124300000000,
+    "netIncome": 36330000000,
+    "eps": 2.40,
+    "form": "10-Q",
+    "source": "10-Q filed 2025-02-05"
+  }
+}
+
+Use ACTUAL values in full dollars (not millions). Most recent data first. Pull from the real IR website and SEC filings — do not fabricate. If a metric is unavailable use null.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    clearInterval(interval);
+    const data = await resp.json();
+
+    const textBlock = data.content?.find(b => b.type === 'text');
+    if (!textBlock?.text) throw new Error('No data returned');
+
+    let raw = textBlock.text.trim()
+      .replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const j0 = raw.indexOf('{'), jN = raw.lastIndexOf('}');
+    if (j0 === -1) throw new Error('Could not parse response');
+    raw = raw.slice(j0, jN + 1);
+
+    currentData = JSON.parse(raw);
+    activeTab = 'financials';
+    filingFilter = 'all';
+    renderDashboard(currentData);
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('mainContent').innerHTML =
+      `<div class="error-box">Failed to load: ${esc(e.message)}. Try again or use a different search term.</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function fmt(v, isEps) {
+  if (v == null) return '—';
+  if (isEps) return '$' + parseFloat(v).toFixed(2);
+  const s = v < 0 ? '-' : '';
+  const a = Math.abs(v);
+  if (a >= 1e12) return s + '$' + (a/1e12).toFixed(2) + 'T';
+  if (a >= 1e9)  return s + '$' + (a/1e9).toFixed(2) + 'B';
+  if (a >= 1e6)  return s + '$' + (a/1e6).toFixed(1) + 'M';
+  return s + '$' + Intl.NumberFormat('en').format(a);
+}
+
+function pct(a, b) {
+  if (a == null || b == null || b === 0) return null;
+  return ((a - b) / Math.abs(b) * 100).toFixed(1);
+}
+
+function metricCard(label, arr, isEps) {
+  const l = arr?.[0], p = arr?.[1];
+  const chg = pct(l?.value, p?.value);
+  let chgHtml = '';
+  if (chg !== null) {
+    const cls = parseFloat(chg) >= 0 ? 'pos' : 'neg';
+    const sign = parseFloat(chg) >= 0 ? '+' : '';
+    chgHtml = `<div class="metric-chg ${cls}">${sign}${chg}%</div>`;
+  }
+  const src = l?.source ? `<div class="metric-period" title="${esc(l.source)}">${esc(l.period)} · ${esc(l.form)}</div>` : `<div class="metric-period">${esc(l?.period||'')}</div>`;
+  return `<div class="metric-card">
+    <div class="metric-label">${label}</div>
+    <div class="metric-value">${fmt(l?.value, isEps)}</div>
+    ${chgHtml}
+    ${src}
+  </div>`;
+}
+
+function renderDashboard(d) {
+  const m = d.metrics || {};
+  document.getElementById('mainContent').innerHTML = `
+    <div class="company-header">
+      <div class="company-name-block">
+        <div class="company-name">${esc(d.company)}</div>
+        <div class="company-meta">${esc(d.ticker)} · ${esc(d.exchange)} · CIK ${esc(d.cik)} · ${esc(d.industry)}</div>
+      </div>
+      ${d.irUrl ? `<a class="ir-link" href="${esc(d.irUrl)}" target="_blank">IR Website ↗</a>` : ''}
+    </div>
+
+    <div class="metrics-grid">
+      ${metricCard('Revenue', m.revenue)}
+      ${metricCard('Net Income', m.netIncome)}
+      ${metricCard('Gross Profit', m.grossProfit)}
+      ${metricCard('Operating CF', m.operatingCashFlow)}
+      ${metricCard('Total Assets', m.totalAssets)}
+      ${metricCard('Cash', m.cash)}
+      ${metricCard('EPS (Diluted)', m.eps, true)}
+      ${metricCard('Equity', m.stockholdersEquity)}
+    </div>
+
+    ${d.latestQuarter ? `<div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px 16px;margin-bottom:1.5rem;display:flex;gap:24px;flex-wrap:wrap;align-items:center;">
+      <div style="font-size:11px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.07em;">Latest Quarter · ${esc(d.latestQuarter.period)}</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;">
+        ${d.latestQuarter.revenue != null ? `<div><div style="font-size:10px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;">Revenue</div><div style="font-size:16px;font-weight:500;font-family:'DM Mono',monospace;">${fmt(d.latestQuarter.revenue)}</div></div>` : ''}
+        ${d.latestQuarter.netIncome != null ? `<div><div style="font-size:10px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;">Net Income</div><div style="font-size:16px;font-weight:500;font-family:'DM Mono',monospace;">${fmt(d.latestQuarter.netIncome)}</div></div>` : ''}
+        ${d.latestQuarter.eps != null ? `<div><div style="font-size:10px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;">EPS</div><div style="font-size:16px;font-weight:500;font-family:'DM Mono',monospace;">${fmt(d.latestQuarter.eps, true)}</div></div>` : ''}
+      </div>
+      <div style="font-size:11px;color:var(--color-text-tertiary);font-family:'DM Mono',monospace;margin-left:auto;">Source: ${esc(d.latestQuarter.source||d.latestQuarter.form)}</div>
+    </div>` : ''}
+
+    <div class="tabs">
+      <div class="tab active" data-tab="financials" onclick="switchTab('financials')">Financials</div>
+      <div class="tab" data-tab="chart" onclick="switchTab('chart')">Charts</div>
+      <div class="tab" data-tab="filings" onclick="switchTab('filings')">Filings</div>
+    </div>
+    <div id="tabContent"></div>
+
+    <div class="source-strip">
+      <div class="source-dot"></div>
+      <div class="source-text">Sourced from ${esc(d.company)} IR website (${esc(d.irUrl||'investor relations')}) · SEC EDGAR 10-K &amp; 10-Q filings · Data as of ${esc(d.dataAsOf||'latest filing')}</div>
+    </div>
+  `;
+  renderTab();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  renderTab();
+}
+
+function renderTab() {
+  const el = document.getElementById('tabContent');
+  if (!el || !currentData) return;
+  const m = currentData.metrics || {};
+
+  if (activeTab === 'financials') {
+    const mkRows = (keys, labels, isEpsArr) => {
+      let html = '';
+      keys.forEach((k, i) => {
+        (m[k] || []).slice(0, 5).forEach(r => {
+          const isEps = isEpsArr?.[i];
+          html += `<tr>
+            <td>${labels[i]}</td>
+            <td>${esc(r.period)}</td>
+            <td><span class="badge ${r.form==='10-K'?'f10k':'f10q'}">${esc(r.form)}</span></td>
+            <td class="num">${fmt(r.value, isEps)}</td>
+            <td style="font-size:11px;color:var(--color-text-tertiary);">${esc(r.source||'')}</td>
+          </tr>`;
+        });
+      });
+      return html || '<tr><td colspan="5" style="color:var(--color-text-tertiary)">No data available</td></tr>';
+    };
+    el.innerHTML = `
+      <p class="section-title">Income Statement</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Metric</th><th>Period</th><th>Form</th><th class="num">Value</th><th>Source</th></tr></thead>
+        <tbody>${mkRows(['revenue','grossProfit','operatingIncome','netIncome','eps','operatingCashFlow'],
+          ['Revenue','Gross Profit','Operating Income','Net Income','EPS (Diluted)','Operating Cash Flow'],
+          [false,false,false,false,true,false])}</tbody>
+      </table></div>
+      <p class="section-title">Balance Sheet</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Metric</th><th>Period</th><th>Form</th><th class="num">Value</th><th>Source</th></tr></thead>
+        <tbody>${mkRows(['totalAssets','totalLiabilities','stockholdersEquity','cash'],
+          ['Total Assets','Total Liabilities','Stockholders Equity','Cash & Equivalents'])}</tbody>
+      </table></div>`;
+
+  } else if (activeTab === 'chart') {
+    const buildChart = (arr, title, color, negColor) => {
+      const data = (arr||[]).filter(r => r.value != null).slice(0,6).reverse();
+      if (!data.length) return '';
+      const maxA = Math.max(...data.map(d => Math.abs(d.value)));
+      const bars = data.map(d => {
+        const h = Math.max(4, Math.round((Math.abs(d.value)/maxA)*148));
+        const c = d.value >= 0 ? color : (negColor||'#c0392b');
+        return `<div class="bar-grp">
+          <div class="bar-amt">${fmt(d.value)}</div>
+          <div class="bar" style="height:${h}px;background:${c}"></div>
+          <div class="bar-period">${esc(d.period)}</div>
+        </div>`;
+      }).join('');
+      return `<div class="chart-wrap">
+        <div class="section-title" style="margin-top:0">${title}</div>
+        <div class="bar-chart">${bars}</div>
+      </div>`;
+    };
+    el.innerHTML = `
+      ${buildChart(m.revenue, 'Annual Revenue', '#378ADD')}
+      ${buildChart(m.netIncome, 'Annual Net Income', '#2d8a4e', '#c0392b')}
+      ${buildChart(m.operatingCashFlow, 'Operating Cash Flow', '#185fa5', '#c0392b')}
+      ${buildChart(m.eps, 'Earnings Per Share (Diluted)', '#3b6d11', '#c0392b')}
+    ` || '<p style="color:var(--color-text-tertiary);font-size:13px;">No chart data available</p>';
+
+  } else if (activeTab === 'filings') {
+    const all = currentData.recentFilings || [];
+    const filtered = filingFilter === 'all' ? all : all.filter(f => f.form?.startsWith(filingFilter));
+    el.innerHTML = `
+      <div class="filter-row">
+        <button class="filter-btn ${filingFilter==='all'?'active':''}" onclick="setFilter('all')">All</button>
+        <button class="filter-btn ${filingFilter==='10-K'?'active':''}" onclick="setFilter('10-K')">10-K Annual</button>
+        <button class="filter-btn ${filingFilter==='10-Q'?'active':''}" onclick="setFilter('10-Q')">10-Q Quarterly</button>
+      </div>
+      <div class="filings-list">
+        ${filtered.map(f => `<div class="filing-row">
+          <span class="badge ${f.form==='10-K'?'f10k':'f10q'}">${esc(f.form)}</span>
+          <span class="filing-desc">${esc(f.description)}</span>
+          <span class="filing-date">${esc(f.date)}</span>
+          ${f.edgarUrl ? `<a class="flink" href="${esc(f.edgarUrl)}" target="_blank">EDGAR ↗</a>` : ''}
+        </div>`).join('') || '<p style="color:var(--color-text-tertiary);font-size:13px;">No filings found</p>'}
+      </div>`;
+  }
+}
+
+function setFilter(f) {
+  filingFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active',
+      (f==='all'&&b.textContent==='All')||(f==='10-K'&&b.textContent==='10-K Annual')||(f==='10-Q'&&b.textContent==='10-Q Quarterly'));
+  });
+  renderTab();
+}
+</script>
