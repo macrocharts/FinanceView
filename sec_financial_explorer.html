@@ -1,0 +1,433 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  
+  #app { padding: 1.5rem 0; max-width: 900px; }
+
+  .header { margin-bottom: 2rem; }
+  .header h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); letter-spacing: -0.02em; }
+  .header p { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+
+  .search-row { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; }
+  .search-row input { flex: 1; }
+  .search-row button { white-space: nowrap; padding: 0 16px; height: 36px; }
+
+  .suggestions { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; margin-top: -12px; margin-bottom: 1rem; }
+  .suggestion-item { padding: 8px 12px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: var(--color-background-secondary); }
+  .suggestion-ticker { font-size: 12px; color: var(--color-text-secondary); margin-left: 8px; }
+
+  .filing-selector { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filing-btn { padding: 6px 14px; font-size: 13px; border-radius: 20px; border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+  .filing-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); border-color: var(--color-border-primary); }
+
+  .company-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 1.5rem; }
+  .company-name { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .company-ticker { font-size: 14px; color: var(--color-text-secondary); background: var(--color-background-secondary); padding: 2px 8px; border-radius: 4px; border: 0.5px solid var(--color-border-tertiary); }
+  .cik-label { font-size: 13px; color: var(--color-text-tertiary); }
+
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+  .metric-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+  .metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .metric-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .metric-change { font-size: 12px; margin-top: 4px; }
+  .pos { color: #2d8a4e; }
+  .neg { color: #c0392b; }
+
+  .section-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; margin-top: 0; }
+
+  .table-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 2rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: var(--color-background-secondary); color: var(--color-text-secondary); font-weight: 500; padding: 10px 14px; text-align: left; border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; }
+  td { padding: 9px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-background-secondary); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .tabs { display: flex; gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.5rem; }
+  .tab { padding: 8px 16px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); border-bottom: 2px solid transparent; margin-bottom: -0.5px; }
+  .tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+
+  .chart-container { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 2rem; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 180px; margin-top: 12px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; background: #378ADD; border-radius: 3px 3px 0 0; transition: height 0.4s ease; min-height: 2px; }
+  .bar-label { font-size: 10px; color: var(--color-text-secondary); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+  .bar-val { font-size: 10px; color: var(--color-text-secondary); }
+
+  .loading { text-align: center; padding: 3rem; color: var(--color-text-secondary); font-size: 14px; }
+  .error { color: #c0392b; font-size: 14px; padding: 1rem; background: #fff5f5; border-radius: var(--border-radius-md); border: 0.5px solid #f5c6c6; margin-bottom: 1rem; }
+
+  .filings-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 2rem; }
+  .filing-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); }
+  .filing-type { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  .f10k { background: #e6f1fb; color: #0c447c; }
+  .f10q { background: #eaf3de; color: #27500a; }
+  .filing-date { font-size: 13px; color: var(--color-text-secondary); }
+  .filing-desc { font-size: 13px; color: var(--color-text-primary); flex: 1; margin: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .filing-link { font-size: 12px; color: #185fa5; text-decoration: none; }
+  .filing-link:hover { text-decoration: underline; }
+
+  .state-empty { text-align: center; padding: 4rem 2rem; color: var(--color-text-tertiary); }
+  .state-empty p { font-size: 15px; }
+  .state-empty small { font-size: 13px; margin-top: 8px; display: block; }
+
+  .period-badge { font-size: 11px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: 4px; padding: 2px 6px; color: var(--color-text-secondary); margin-left: 6px; vertical-align: middle; }
+</style>
+
+<div id="app">
+  <div class="header">
+    <h1>SEC Filing Explorer</h1>
+    <p>Pull financial data directly from 10-K and 10-Q filings via SEC EDGAR</p>
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="Search by company name or ticker (e.g. Apple, MSFT, TSLA)..." autocomplete="off" />
+    <button onclick="doSearch()">Search ↗</button>
+  </div>
+  <div id="suggestions" style="display:none;" class="suggestions"></div>
+
+  <div id="mainContent">
+    <div class="state-empty">
+      <p>Search for a company to explore its filings</p>
+      <small>Data sourced live from SEC EDGAR — covers all US public companies</small>
+    </div>
+  </div>
+</div>
+
+<script>
+const EDGAR_BASE = 'https://data.sec.gov';
+const SEARCH_BASE = 'https://efts.sec.gov/LATEST/search-index';
+let currentCIK = null;
+let currentCompany = null;
+let allFilings = [];
+let activeTab = 'financials';
+let activeFilingType = 'all';
+
+const searchInput = document.getElementById('searchInput');
+const suggestionsEl = document.getElementById('suggestions');
+const mainContent = document.getElementById('mainContent');
+
+searchInput.addEventListener('input', debounce(fetchSuggestions, 300));
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+document.addEventListener('click', e => { if (!e.target.closest('.search-row') && !e.target.closest('.suggestions')) suggestionsEl.style.display = 'none'; });
+
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+async function fetchSuggestions() {
+  const q = searchInput.value.trim();
+  if (q.length < 2) { suggestionsEl.style.display = 'none'; return; }
+  try {
+    const r = await fetch(`https://efts.sec.gov/LATEST/search-index?q=%22${encodeURIComponent(q)}%22&dateRange=custom&startdt=2020-01-01&forms=10-K&hits.hits._source=period_of_report,entity_name,file_num&hits.hits.total.value=1&hits.hits.hits.total=1`);
+    const companies = await searchCompanies(q);
+    if (companies.length === 0) { suggestionsEl.style.display = 'none'; return; }
+    suggestionsEl.innerHTML = companies.slice(0, 8).map(c =>
+      `<div class="suggestion-item" onclick="selectCompany('${c.cik}','${escHtml(c.name)}')">
+        ${escHtml(c.name)}<span class="suggestion-ticker">${c.ticker || ''}</span>
+      </div>`
+    ).join('');
+    suggestionsEl.style.display = 'block';
+  } catch(e) { suggestionsEl.style.display = 'none'; }
+}
+
+async function searchCompanies(q) {
+  const r = await fetch(`https://efts.sec.gov/LATEST/search-index?q=%22${encodeURIComponent(q)}%22&forms=10-K&dateRange=custom&startdt=2022-01-01&hits.hits._source=period_of_report,entity_name,file_num,ticker_symbol`);
+  const data = await r.json();
+  const seen = new Set();
+  const results = [];
+  (data.hits?.hits || []).forEach(h => {
+    const src = h._source || {};
+    const name = src.entity_name;
+    const cik = h._id?.split(':')[0];
+    const ticker = src.ticker_symbol;
+    if (name && cik && !seen.has(cik)) { seen.add(cik); results.push({ name, cik, ticker }); }
+  });
+  return results;
+}
+
+function escHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+async function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  suggestionsEl.style.display = 'none';
+  setLoading('Searching EDGAR...');
+  try {
+    const companies = await searchCompanies(q);
+    if (companies.length === 0) { mainContent.innerHTML = '<div class="error">No companies found. Try a different name or ticker.</div>'; return; }
+    const first = companies[0];
+    selectCompany(first.cik, first.name);
+  } catch(e) { mainContent.innerHTML = `<div class="error">Search failed: ${e.message}</div>`; }
+}
+
+function setLoading(msg) { mainContent.innerHTML = `<div class="loading">${msg}</div>`; }
+
+async function selectCompany(cik, name) {
+  suggestionsEl.style.display = 'none';
+  currentCIK = cik.padStart(10, '0');
+  currentCompany = name;
+  searchInput.value = name;
+  activeTab = 'financials';
+  activeFilingType = 'all';
+  setLoading('Loading company data...');
+  try {
+    const [facts, submissions] = await Promise.all([
+      fetch(`${EDGAR_BASE}/api/xbrl/companyfacts/CIK${currentCIK}.json`).then(r => r.json()),
+      fetch(`${EDGAR_BASE}/submissions/CIK${currentCIK}.json`).then(r => r.json())
+    ]);
+    renderCompany(facts, submissions);
+  } catch(e) { mainContent.innerHTML = `<div class="error">Failed to load data: ${e.message}</div>`; }
+}
+
+function extractFact(facts, ...keys) {
+  const us = facts?.facts?.['us-gaap'] || {};
+  for (const key of keys) {
+    const f = us[key];
+    if (!f) continue;
+    const units = f.units || {};
+    const arr = units['USD'] || units['shares'] || units['pure'] || Object.values(units)[0] || [];
+    const annual = arr.filter(x => x.form === '10-K' && x.val != null).sort((a,b) => b.end?.localeCompare(a.end));
+    const quarterly = arr.filter(x => x.form === '10-Q' && x.val != null).sort((a,b) => b.end?.localeCompare(a.end));
+    if (annual.length || quarterly.length) return { annual, quarterly, label: f.label || key };
+  }
+  return null;
+}
+
+function fmtNum(v, isShares) {
+  if (v == null) return '—';
+  if (isShares) return Intl.NumberFormat('en', {notation:'compact',maximumFractionDigits:2}).format(v);
+  const abs = Math.abs(v);
+  if (abs >= 1e12) return (v/1e12).toFixed(2) + 'T';
+  if (abs >= 1e9) return (v/1e9).toFixed(2) + 'B';
+  if (abs >= 1e6) return (v/1e6).toFixed(1) + 'M';
+  return Intl.NumberFormat('en').format(v);
+}
+
+function fmtDollar(v) { return v == null ? '—' : '$' + fmtNum(v); }
+
+function pctChange(a, b) {
+  if (!b || b === 0) return null;
+  return ((a - b) / Math.abs(b) * 100).toFixed(1);
+}
+
+function renderCompany(facts, submissions) {
+  const ticker = submissions.tickers?.[0] || '';
+  const cik = submissions.cik;
+  const sic = submissions.sic || '';
+  const sicDesc = submissions.sicDescription || '';
+
+  const revenue = extractFact(facts, 'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax');
+  const netIncome = extractFact(facts, 'NetIncomeLoss', 'ProfitLoss');
+  const assets = extractFact(facts, 'Assets');
+  const equity = extractFact(facts, 'StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest');
+  const cash = extractFact(facts, 'CashAndCashEquivalentsAtCarryingValue', 'Cash', 'CashCashEquivalentsAndShortTermInvestments');
+  const eps = extractFact(facts, 'EarningsPerShareBasic', 'EarningsPerShareDiluted');
+  const liabilities = extractFact(facts, 'Liabilities');
+  const ocf = extractFact(facts, 'NetCashProvidedByUsedInOperatingActivities');
+
+  const latestRev = revenue?.annual?.[0]?.val;
+  const prevRev = revenue?.annual?.[1]?.val;
+  const latestNI = netIncome?.annual?.[0]?.val;
+  const latestAssets = assets?.annual?.[0]?.val;
+  const latestCash = cash?.annual?.[0]?.val;
+
+  const recentFilings = buildFilingsList(submissions);
+  allFilings = recentFilings;
+
+  mainContent.innerHTML = `
+    <div class="company-header">
+      <span class="company-name">${escHtml(currentCompany)}</span>
+      ${ticker ? `<span class="company-ticker">${escHtml(ticker)}</span>` : ''}
+      <span class="cik-label">CIK: ${cik}</span>
+      ${sicDesc ? `<span class="cik-label">· ${escHtml(sicDesc)}</span>` : ''}
+    </div>
+
+    <div class="metrics-grid">
+      ${metricCard('Revenue', latestRev ? fmtDollar(latestRev) : '—', pctChange(latestRev, prevRev), revenue?.annual?.[0]?.end ? 'FY ' + revenue.annual[0].end.slice(0,4) : 'Annual')}
+      ${metricCard('Net Income', latestNI ? fmtDollar(latestNI) : '—', null, netIncome?.annual?.[0]?.end ? 'FY ' + netIncome.annual[0].end.slice(0,4) : 'Annual')}
+      ${metricCard('Total Assets', latestAssets ? fmtDollar(latestAssets) : '—', null, assets?.annual?.[0]?.end ? 'FY ' + assets.annual[0].end.slice(0,4) : 'Annual')}
+      ${metricCard('Cash & Equiv.', latestCash ? fmtDollar(latestCash) : '—', null, cash?.annual?.[0]?.end ? 'FY ' + cash.annual[0].end.slice(0,4) : 'Annual')}
+    </div>
+
+    <div class="tabs">
+      <div class="tab ${activeTab==='financials'?'active':''}" onclick="switchTab('financials')">Financial Data</div>
+      <div class="tab ${activeTab==='chart'?'active':''}" onclick="switchTab('chart')">Revenue Chart</div>
+      <div class="tab ${activeTab==='filings'?'active':''}" onclick="switchTab('filings')">Filings</div>
+    </div>
+
+    <div id="tabContent"></div>
+  `;
+
+  renderTab(facts, submissions, revenue, netIncome, assets, equity, cash, eps, liabilities, ocf);
+}
+
+function metricCard(label, value, change, period) {
+  let changeHtml = '';
+  if (change !== null && change !== undefined) {
+    const cls = parseFloat(change) >= 0 ? 'pos' : 'neg';
+    const sign = parseFloat(change) >= 0 ? '+' : '';
+    changeHtml = `<div class="metric-change ${cls}">${sign}${change}% YoY</div>`;
+  }
+  return `<div class="metric-card">
+    <div class="metric-label">${label}</div>
+    <div class="metric-value">${value}</div>
+    ${changeHtml}
+    <div class="metric-sub">${period}</div>
+  </div>`;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().includes(tab.substring(0,4).toLowerCase()) || (tab==='chart' && t.textContent.includes('Chart')) || (tab==='filings' && t.textContent.includes('Filings'))));
+  const facts = window._cachedFacts;
+  const subs = window._cachedSubs;
+  if (facts) renderTab(facts, subs, ...window._cachedExtracted);
+}
+
+function renderTab(facts, subs, revenue, netIncome, assets, equity, cash, eps, liabilities, ocf) {
+  window._cachedFacts = facts;
+  window._cachedSubs = subs;
+  window._cachedExtracted = [revenue, netIncome, assets, equity, cash, eps, liabilities, ocf];
+  const el = document.getElementById('tabContent');
+  if (!el) return;
+
+  if (activeTab === 'financials') {
+    let rows = [];
+    const pushRows = (label, fact, isShares) => {
+      if (!fact) return;
+      const annual = fact.annual.slice(0,5);
+      annual.forEach(r => { rows.push({ category: label, period: r.end, form: r.form, val: r.val, isShares }); });
+    };
+    const mkTable = (items) => {
+      if (!items.length) return '<p style="color:var(--color-text-tertiary);font-size:13px;">No data available</p>';
+      return `<div class="table-wrap"><table>
+        <thead><tr><th>Metric</th><th>Period End</th><th>Form</th><th class="num">Value</th></tr></thead>
+        <tbody>${items.map(r => `<tr>
+          <td>${r.category}</td>
+          <td>${r.period}</td>
+          <td><span class="filing-type ${r.form==='10-K'?'f10k':'f10q'}">${r.form}</span></td>
+          <td class="num">${r.isShares ? fmtNum(r.val, true) : fmtDollar(r.val)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    };
+
+    const incomeRows = [];
+    const addIncome = (label, fact) => { if (!fact) return; fact.annual.slice(0,5).forEach(r => incomeRows.push({ category: label, period: r.end, form: r.form, val: r.val })); };
+    addIncome('Revenue', revenue);
+    addIncome('Net Income', netIncome);
+    addIncome('Operating Cash Flow', ocf);
+    addIncome('EPS (Basic)', eps);
+
+    const balRows = [];
+    const addBal = (label, fact) => { if (!fact) return; fact.annual.slice(0,5).forEach(r => balRows.push({ category: label, period: r.end, form: r.form, val: r.val })); };
+    addBal('Total Assets', assets);
+    addBal('Total Liabilities', liabilities);
+    addBal('Stockholders Equity', equity);
+    addBal('Cash & Equivalents', cash);
+
+    el.innerHTML = `
+      <p class="section-title">Income & Cash Flow</p>
+      ${mkTable(incomeRows)}
+      <p class="section-title" style="margin-top:1.5rem">Balance Sheet</p>
+      ${mkTable(balRows)}
+    `;
+  } else if (activeTab === 'chart') {
+    const revData = revenue?.annual?.slice(0,8).reverse() || [];
+    if (!revData.length) { el.innerHTML = '<p style="color:var(--color-text-tertiary);font-size:13px;padding:1rem 0">No revenue data available</p>'; return; }
+    const maxVal = Math.max(...revData.map(d => d.val));
+    const bars = revData.map(d => {
+      const h = Math.max(4, Math.round((d.val / maxVal) * 160));
+      return `<div class="bar-group">
+        <div class="bar-val">${fmtDollar(d.val)}</div>
+        <div class="bar" style="height:${h}px"></div>
+        <div class="bar-label">${d.end?.slice(0,4) || ''}</div>
+      </div>`;
+    }).join('');
+
+    const niData = netIncome?.annual?.slice(0,8).reverse() || [];
+    const niMaxAbs = niData.length ? Math.max(...niData.map(d => Math.abs(d.val))) : 1;
+    const niBars = niData.map(d => {
+      const h = Math.max(4, Math.round((Math.abs(d.val) / niMaxAbs) * 140));
+      const color = d.val >= 0 ? '#2d8a4e' : '#c0392b';
+      return `<div class="bar-group">
+        <div class="bar-val" style="color:${color}">${fmtDollar(d.val)}</div>
+        <div class="bar" style="height:${h}px;background:${color}"></div>
+        <div class="bar-label">${d.end?.slice(0,4) || ''}</div>
+      </div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="chart-container">
+        <p class="section-title">Annual Revenue</p>
+        <div class="bar-chart">${bars}</div>
+      </div>
+      ${niData.length ? `<div class="chart-container">
+        <p class="section-title">Annual Net Income</p>
+        <div class="bar-chart">${niBars}</div>
+      </div>` : ''}
+    `;
+  } else if (activeTab === 'filings') {
+    const filtered = activeFilingType === 'all' ? allFilings : allFilings.filter(f => f.form.startsWith(activeFilingType));
+    el.innerHTML = `
+      <div class="filing-selector">
+        <button class="filing-btn ${activeFilingType==='all'?'active':''}" onclick="filterFilings('all')">All</button>
+        <button class="filing-btn ${activeFilingType==='10-K'?'active':''}" onclick="filterFilings('10-K')">10-K Annual</button>
+        <button class="filing-btn ${activeFilingType==='10-Q'?'active':''}" onclick="filterFilings('10-Q')">10-Q Quarterly</button>
+      </div>
+      <div class="filings-list">
+        ${filtered.slice(0,30).map(f => `
+          <div class="filing-row">
+            <span class="filing-type ${f.form==='10-K'?'f10k':'f10q'}">${f.form}</span>
+            <span class="filing-desc">${escHtml(f.description || '')}</span>
+            <span class="filing-date">${f.date}</span>
+            ${f.url ? `<a class="filing-link" href="${f.url}" target="_blank">View ↗</a>` : ''}
+          </div>
+        `).join('')}
+        ${filtered.length === 0 ? '<p style="color:var(--color-text-tertiary);font-size:13px;padding:1rem 0">No filings found</p>' : ''}
+      </div>
+    `;
+  }
+}
+
+function filterFilings(type) {
+  activeFilingType = type;
+  document.querySelectorAll('.filing-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.trim() === (type === 'all' ? 'All' : type === '10-K' ? '10-K Annual' : '10-Q Quarterly'));
+  });
+  const el = document.getElementById('tabContent');
+  if (!el) return;
+  const filtered = type === 'all' ? allFilings : allFilings.filter(f => f.form.startsWith(type));
+  const listEl = el.querySelector('.filings-list');
+  if (listEl) {
+    listEl.innerHTML = filtered.slice(0,30).map(f => `
+      <div class="filing-row">
+        <span class="filing-type ${f.form==='10-K'?'f10k':'f10q'}">${f.form}</span>
+        <span class="filing-desc">${escHtml(f.description || '')}</span>
+        <span class="filing-date">${f.date}</span>
+        ${f.url ? `<a class="filing-link" href="${f.url}" target="_blank">View ↗</a>` : ''}
+      </div>
+    `).join('') || '<p style="color:var(--color-text-tertiary);font-size:13px;padding:1rem 0">No filings found</p>';
+  }
+}
+
+function buildFilingsList(submissions) {
+  const recent = submissions.filings?.recent || {};
+  const forms = recent.form || [];
+  const dates = recent.filingDate || [];
+  const accNums = recent.accessionNumber || [];
+  const descriptions = recent.primaryDocument || [];
+  const result = [];
+  for (let i = 0; i < forms.length; i++) {
+    const f = forms[i];
+    if (f === '10-K' || f === '10-K/A' || f === '10-Q' || f === '10-Q/A') {
+      const acc = (accNums[i] || '').replace(/-/g,'');
+      const url = acc ? `https://www.sec.gov/Archives/edgar/data/${parseInt(currentCIK)}/${acc}/${descriptions[i] || ''}` : null;
+      result.push({ form: f, date: dates[i] || '', description: descriptions[i] || '', url });
+    }
+  }
+  return result;
+}
+</script>
